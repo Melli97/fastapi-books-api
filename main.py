@@ -2,28 +2,27 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-libri = {
-    "libro1": {
-        "titolo": "Il nome della rosa",
-        "autore": "Umberto Eco",
-        "categoria": "Romanzo storico"
-    },
-    "libro2": {
-        "titolo": "1984",
-        "autore": "George Orwell",
-        "categoria": "Distopico"
-    },
-    "libro3": {
-        "titolo": "Il Signore degli Anelli",
-        "autore": "J.R.R. Tolkien",
-        "categoria": "Fantasy"
-    }
-}
+# Lista di libri
+# List of books in English
+BOOKS = [
+    {"title": "Title One", "author": "Author One", "category": "Math"},
+    {"title": "Title Two", "author": "Author Two", "category": "Math"},
+    {"title": "Title Three", "author": "Author Three", "category": "Math"},
+    {"title": "Title Four", "author": "Author Four", "category": "Science"},
+    {"title": "Title Five", "author": "Author Five", "category": "History"}
+]
 
 @app.get("/endpoint")
 def home():
     return {"messaggio": "Funziona!"}
 
-@app.get("/libri")
+@app.get("/books")
 async def read_all_books():
-    return libri
+    return BOOKS
+
+@app.get("/libri/{book_title}")
+async def read_book(book_title : str):
+    for book in BOOKS:
+        if book.get('title').casefold() == book_title.casefold():
+
+            return book
