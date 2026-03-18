@@ -20,7 +20,7 @@ libri = {
     }
 }
 
-@app.get("/")
+@app.get("/endpoint")
 def home():
     return {"messaggio": "Funziona!"}
 
