@@ -3,7 +3,6 @@ from fastapi import FastAPI
 app = FastAPI()
 
 # Lista di libri
-# List of books in English
 BOOKS = [
     {"title": "Title One", "author": "Author One", "category": "Math"},
     {"title": "Title Two", "author": "Author Two", "category": "Math"},
@@ -36,10 +35,9 @@ async def read_category_by_query(category: str): # FastAPI capisce che è una qu
     return books_to_return
 
 
-@app.get("/books/{book_author}/")
+@app.get("/books/{book_author}/") #filtraggio per categoria query parameter e autore con path
 async def read_category_by_query(book_author: str, category: str):
     book_to_return = []
-
     for book in BOOKS:
         if book.get('author').casefold() == book_author.casefold() and \
            book.get('category').casefold() == category.casefold():
