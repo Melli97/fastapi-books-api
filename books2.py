@@ -1,5 +1,5 @@
 from fastapi import Body, FastAPI
-
+from pydantic import BaseModel
 app = FastAPI()
 
 class Book:
@@ -17,6 +17,14 @@ class Book:
         self.description = description
         self.rating = rating
 
+class BookRequest(BaseModel):
+    id: int
+    title: str
+    author: str
+    description: str
+    rating : int
+
+
 
 
 BOOKS = [
@@ -32,7 +40,11 @@ BOOKS = [
 async def read_all_books():
     return BOOKS
 
-@app.post("/books/create_book")
-async def create_book(book_request=Body()): #FastAPI prende il corpo della richiesta HTTP 
-    BOOKS.append(book_request)           #(JSON inviato dal client) e lo mette dentro la variabile new_book.
+@app.post("/books/create_book")  # Definisce un endpoint POST per creare un libro
+async def create_book(book_request: BookRequest):  # Riceve i dati del libro validati da Pydantic
+    new_book = Book(**book_request.model_dump())  # ** lasterisco davanti ci permette di assegnare questi argomenti al nuovo libro
+    # Converte il modello Pydantic in dizionario e lo usa per creare un oggetto Book
+    
+    BOOKS.append(new_book)  
+    # Aggiunge il nuovo libro alla lista in memoria (simula un database)           
 
