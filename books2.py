@@ -100,3 +100,29 @@ def find_book_id(book: Book):
 
     return book  
     # Restituisce il libro con l'id aggiornato
+
+
+
+@app.post("/books/update_book")  
+# Definisce un endpoint POST su /books/update_book
+# Serve per aggiornare un libro esistente
+
+async def update_book(book: BookRequest):  
+    # Riceve i dati del libro da aggiornare come oggetto Pydantic (BookRequest)
+    # FastAPI valida automaticamente che i campi siano corretti
+
+    for i in range(len(BOOKS)):  
+        if BOOKS[i].id == book.id:  
+            # Controlla se l'id del libro corrente corrisponde all'id del libro da aggiornare
+
+            BOOKS[i] = book  
+            # sostituisce l'oggetto esistente con il nuovo oggetto ricevuto
+
+
+
+@app.delete("/books/{book_id}")
+async def delete_book(book_id: int):
+        for i in range(len(BOOKS)):  
+            if BOOKS[i].id == book_id:  
+                BOOKS.pop(i)
+                break
