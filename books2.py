@@ -20,20 +20,30 @@ class Book:
         self.rating = rating
 
 class BookRequest(BaseModel):
-   
-    id: Optional[int] = None  #id opzionale non obbligatori  non passiamo nulla lo passeremo dopo con la funzione
+                            #descrivi su http://127.0.0.1:8000/docs 
+    id: Optional[int] = Field(description='Id non è necessario crearlo', default=None)  #id opzionale non obbligatori  non passiamo nulla lo passeremo dopo con la funzione
     title: str = Field(min_lenght=3)
     author: str =  Field(min_lenght=3)
     description: str = Field(min_lenght=3, max_length=100)
     rating : int = Field(gt=1,lt =6)
 
-
+    #Esempio di modello su http://127.0.0.1:8000/docs
+    model_config = {
+        "json_schema_extra":{
+            "example":{
+                "title" : "new book",
+                "author" : "autore1",
+                "description": "descrizione",
+                "rating" : 4
+            }
+        }
+    }
 
 
 BOOKS = [
     Book(1, "Harry Potter", "J.K. Rowling", "Wizard story", 3),
     Book(2, "Il Signore degli Anelli", "Tolkien", "Epic fantasy", 5),
-    Book(3, "1984", "George Orwell", "Dystopian future", 4),
+    Book(3, "1984", "George Orwell", "Dystopian future", 5),
     Book(4, "Il Piccolo Principe", "Antoine de Saint-Exupéry", "Philosophical tale", 5),
     Book(5, "Clean Code", "Robert C. Martin", "Programming best practices", 2),
     Book(6, "Clean Code", "Robert C. Martin", "Programming best practices", 1)
@@ -42,6 +52,28 @@ BOOKS = [
 @app.get("/books") #legge tutti i libri
 async def read_all_books():
     return BOOKS
+
+
+@app.get("/books/{book_id}")        #ricerca tramite id
+async def read_book(book_id : int):
+    for book in BOOKS:
+       if book.id == book_id:
+            return book
+
+@app.get("/books/")  
+# ATTENZIONE: così com'è, il parametro book_rating sarà una query parameter (es: /books/?book_rating=5)
+
+async def read_book_by_rating(book_rating: int):  
+    # Funzione che riceve un rating (numero intero) dalla richiesta
+    # FastAPI lo prende dalla query string e lo valida automaticamente
+
+    books_retun = []  
+    for book in BOOKS:  
+        if book.rating == book_rating:  
+           books_retun.append(book)  
+    return books_retun  
+        
+
 
 @app.post("/books/create_book")  # Definisce un endpoint POST per creare un libro
 async def create_book(book_request: BookRequest):  # Riceve i dati del libro validati da Pydantic
