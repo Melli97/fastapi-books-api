@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import  FastAPI
+from fastapi import  FastAPI, Path, Query, HTTPException  # Path e Query servono per la validazione 
 from pydantic import BaseModel, Field
 app = FastAPI()
 
@@ -28,7 +28,7 @@ class BookRequest(BaseModel):
     author: str =  Field(min_length=3)
     description: str = Field(min_length=3, max_length=100)
     rating : int = Field(gt=1,lt =6)
-    published_date: int = Field(gt=1900, description="Anno di pubblicazione")
+    published_date: int = Field(gt=1900, lt= 2031 )
 
     #Esempio di modello su http://127.0.0.1:8000/docs
     model_config = {
@@ -58,15 +58,17 @@ async def read_all_books():
 
 
 @app.get("/books/{book_id}")        #ricerca tramite id
-async def read_book(book_id : int):
+async def read_book(book_id : int = Path(gt=0)):  #diciamo che il parametro che viene passato deve essere maggiore di 0
     for book in BOOKS:
        if book.id == book_id:
             return book
+    raise HTTPException(status_code=404, detail="libro non trovato") #gestione eccezzione http se non esiste il libro
+
 
 @app.get("/books/")  
 # ATTENZIONE: così com'è, il parametro book_rating sarà una query parameter (es: /books/?book_rating=5)
 
-async def read_book_by_rating(book_rating: int):  
+async def read_book_by_rating(book_rating: int = Query(gt= 0, lt = 6)):  
     # Funzione che riceve un rating (numero intero) dalla richiesta
     # FastAPI lo prende dalla query string e lo valida automaticamente
 
@@ -77,7 +79,7 @@ async def read_book_by_rating(book_rating: int):
     return books_retun  
 
 @app.get("/books/published/")
-async def read_books_by_published_date(published_date: int):
+async def read_books_by_published_date(published_date: int = Query(gt=1900, lt= 2031 )):
     books_return = []
 
     for book in BOOKS:
@@ -123,19 +125,24 @@ def find_book_id(book: Book):
 async def update_book(book: BookRequest):  
     # Riceve i dati del libro da aggiornare come oggetto Pydantic (BookRequest)
     # FastAPI valida automaticamente che i campi siano corretti
-
+    book_changed = False
     for i in range(len(BOOKS)):  
         if BOOKS[i].id == book.id:  
             # Controlla se l'id del libro corrente corrisponde all'id del libro da aggiornare
-
             BOOKS[i] = book  
             # sostituisce l'oggetto esistente con il nuovo oggetto ricevuto
-
+            book_changed = True
+    if not book_changed : 
+            raise HTTPException(status_code=404, detail="libro non trovato") #gestione errore se non esiste il libro
 
 
 @app.delete("/books/{book_id}")
-async def delete_book(book_id: int):
+async def delete_book(book_id: int = Path(gt=0)): #diciamo che il parametro che viene passato deve essere maggiore di 0
+        book_changed = False #gestione booleana dell errore 
         for i in range(len(BOOKS)):  
             if BOOKS[i].id == book_id:  
                 BOOKS.pop(i)
+                book_changed = True
                 break
+        if not book_changed : #gestione booleana dell errore 
+            raise HTTPException(status_code=404, detail="libro non trovato") #gestione eccezzione http se non esiste il libro
