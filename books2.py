@@ -10,22 +10,25 @@ class Book:
     author: str
     description: str
     rating : int
+    published_date: int
 
 
-    def __init__(self, id, title, author, description, rating):
+    def __init__(self, id, title, author, description, rating,published_date):
         self.id = id
         self.title = title
         self.author = author
         self.description = description
         self.rating = rating
+        self.published_date = published_date
 
 class BookRequest(BaseModel):
                             #descrivi su http://127.0.0.1:8000/docs 
     id: Optional[int] = Field(description='Id non è necessario crearlo', default=None)  #id opzionale non obbligatori  non passiamo nulla lo passeremo dopo con la funzione
-    title: str = Field(min_lenght=3)
-    author: str =  Field(min_lenght=3)
-    description: str = Field(min_lenght=3, max_length=100)
+    title: str = Field(min_length=3)
+    author: str =  Field(min_length=3)
+    description: str = Field(min_length=3, max_length=100)
     rating : int = Field(gt=1,lt =6)
+    published_date: int = Field(gt=1900, description="Anno di pubblicazione")
 
     #Esempio di modello su http://127.0.0.1:8000/docs
     model_config = {
@@ -41,12 +44,12 @@ class BookRequest(BaseModel):
 
 
 BOOKS = [
-    Book(1, "Harry Potter", "J.K. Rowling", "Wizard story", 3),
-    Book(2, "Il Signore degli Anelli", "Tolkien", "Epic fantasy", 5),
-    Book(3, "1984", "George Orwell", "Dystopian future", 5),
-    Book(4, "Il Piccolo Principe", "Antoine de Saint-Exupéry", "Philosophical tale", 5),
-    Book(5, "Clean Code", "Robert C. Martin", "Programming best practices", 2),
-    Book(6, "Clean Code", "Robert C. Martin", "Programming best practices", 1)
+    Book(1, "Harry Potter", "J.K. Rowling", "Wizard story", 3, 1997),
+    Book(2, "Il Signore degli Anelli", "Tolkien", "Epic fantasy", 5, 1954),
+    Book(3, "1984", "George Orwell", "Dystopian future", 5, 1949),
+    Book(4, "Il Piccolo Principe", "Antoine de Saint-Exupéry", "Philosophical tale", 5, 1943),
+    Book(5, "Clean Code", "Robert C. Martin", "Programming best practices", 2, 2008),
+    Book(6, "Clean Code", "Robert C. Martin", "Programming best practices", 1, 2008)
 ]
 
 @app.get("/books") #legge tutti i libri
@@ -72,6 +75,16 @@ async def read_book_by_rating(book_rating: int):
         if book.rating == book_rating:  
            books_retun.append(book)  
     return books_retun  
+
+@app.get("/books/published/")
+async def read_books_by_published_date(published_date: int):
+    books_return = []
+
+    for book in BOOKS:
+        if book.published_date == published_date:
+            books_return.append(book)
+
+    return books_return
         
 
 
