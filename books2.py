@@ -2,6 +2,8 @@ from typing import Optional
 
 from fastapi import  FastAPI, Path, Query, HTTPException  # Path e Query servono per la validazione 
 from pydantic import BaseModel, Field
+from starlette import status
+
 app = FastAPI()
 
 class Book:
@@ -52,12 +54,12 @@ BOOKS = [
     Book(6, "Clean Code", "Robert C. Martin", "Programming best practices", 1, 2008)
 ]
 
-@app.get("/books") #legge tutti i libri
+@app.get("/books", status_code= status.HTTP_200_OK) #legge tutti i libri
 async def read_all_books():
     return BOOKS
 
 
-@app.get("/books/{book_id}")        #ricerca tramite id
+@app.get("/books/{book_id}", status_code= status.HTTP_200_OK)        #ricerca tramite id
 async def read_book(book_id : int = Path(gt=0)):  #diciamo che il parametro che viene passato deve essere maggiore di 0
     for book in BOOKS:
        if book.id == book_id:
@@ -65,7 +67,7 @@ async def read_book(book_id : int = Path(gt=0)):  #diciamo che il parametro che 
     raise HTTPException(status_code=404, detail="libro non trovato") #gestione eccezzione http se non esiste il libro
 
 
-@app.get("/books/")  
+@app.get("/books/", status_code= status.HTTP_200_OK)  
 # ATTENZIONE: così com'è, il parametro book_rating sarà una query parameter (es: /books/?book_rating=5)
 
 async def read_book_by_rating(book_rating: int = Query(gt= 0, lt = 6)):  
@@ -78,7 +80,7 @@ async def read_book_by_rating(book_rating: int = Query(gt= 0, lt = 6)):
            books_retun.append(book)  
     return books_retun  
 
-@app.get("/books/published/")
+@app.get("/books/published/", status_code= status.HTTP_200_OK)
 async def read_books_by_published_date(published_date: int = Query(gt=1900, lt= 2031 )):
     books_return = []
 
@@ -90,7 +92,7 @@ async def read_books_by_published_date(published_date: int = Query(gt=1900, lt= 
         
 
 
-@app.post("/books/create_book")  # Definisce un endpoint POST per creare un libro
+@app.post("/books/create_book", status_code= status.HTTP_201_CREATED)  # Definisce un endpoint POST per creare un libro
 async def create_book(book_request: BookRequest):  # Riceve i dati del libro validati da Pydantic
     new_book = Book(**book_request.model_dump())  # ** lasterisco davanti ci permette di assegnare questi argomenti al nuovo libro
     # Converte il modello Pydantic in dizionario e lo usa per creare un oggetto Book
@@ -118,7 +120,7 @@ def find_book_id(book: Book):
 
 
 
-@app.post("/books/update_book")  
+@app.post("/books/update_book", status_code= status.HTTP_204_NO_CONTENT)  
 # Definisce un endpoint POST su /books/update_book
 # Serve per aggiornare un libro esistente
 
@@ -136,7 +138,7 @@ async def update_book(book: BookRequest):
             raise HTTPException(status_code=404, detail="libro non trovato") #gestione errore se non esiste il libro
 
 
-@app.delete("/books/{book_id}")
+@app.delete("/books/{book_id}", status_code= status.HTTP_204_NO_CONTENT)
 async def delete_book(book_id: int = Path(gt=0)): #diciamo che il parametro che viene passato deve essere maggiore di 0
         book_changed = False #gestione booleana dell errore 
         for i in range(len(BOOKS)):  
@@ -146,3 +148,22 @@ async def delete_book(book_id: int = Path(gt=0)): #diciamo che il parametro che 
                 break
         if not book_changed : #gestione booleana dell errore 
             raise HTTPException(status_code=404, detail="libro non trovato") #gestione eccezzione http se non esiste il libro
+        
+
+#Status code http
+# GET → 200 OK
+# POST (creazione) → 201 CREATED
+# PUT/PATCH/POST per update → 204 NO CONTENT se non si restituisce nulla
+# DELETE → 204 NO CONTENT se non si restituisce nulla
+# Risorse non trovate → 404 NOT FOUND
+
+
+# | Endpoint             | Metodo             | Status code                    | Significato                                    |
+# | -------------------- | ------------------ | ------------------------------ | ---------------------------------------------- |
+# | `/books`             | GET                | 200 OK                         | Lettura di tutti i libri riuscita              |
+# | `/books/{book_id}`   | GET                | 200 OK / 404 NOT FOUND         | Lettura libro singolo, errore se ID non esiste |
+# | `/books/`            | GET (query rating) | 200 OK                         | Lettura libri filtrati per rating              |
+# | `/books/published/`  | GET                | 200 OK                         | Lettura libri filtrati per anno                |
+# | `/books/create_book` | POST               | 201 CREATED                    | Creazione libro riuscita                       |
+# | `/books/update_book` | POST               | 204 NO CONTENT / 404 NOT FOUND | Aggiornamento libro, errore se non esiste      |
+# | `/books/{book_id}`   | DELETE             | 204 NO CONTENT / 404 NOT FOUND | Eliminazione libro, errore se non esiste       |
