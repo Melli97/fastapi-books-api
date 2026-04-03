@@ -6,11 +6,21 @@ import models  # Importa il modulo models, che contiene i modelli del database
 from models import Todos  # Importa il modello Todos dal modulo models
 from database import engine, SessionLocal  # Importa l'engine del database e la classe di sessione locale
 from starlette import status
+from routers import auth #import file auth
+
+
 # Crea un'istanza dell'app FastAPI
 app = FastAPI()
 
 # Crea le tabelle nel database utilizzando i modelli definiti
 models.Base.metadata.create_all(bind=engine)
+
+
+# Aggiunge all'app FastAPI tutti gli endpoint definiti nel router del file auth
+# auth.router è un oggetto APIRouter che contiene le rotte (es: login, register)
+# In questo modo puoi organizzare il progetto in più file invece di avere tutto in main.py
+app.include_router(auth.router)
+
 
 # Funzione per ottenere una sessione del database
 def get_db():
