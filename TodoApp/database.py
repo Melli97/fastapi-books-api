@@ -11,7 +11,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # URL del database (in questo caso SQLite)
 # ./todos.db significa che il file verrà creato nella cartella del progetto
-SQLALCHEMY_DATABASE_URL = 'sqlite:///./todos.db'
+SQLALCHEMY_DATABASE_URL = 'sqlite:///./todosapp.db'
 
 
 # Crea il motore (engine) che gestisce la connessione al database
