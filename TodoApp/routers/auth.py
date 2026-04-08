@@ -6,6 +6,7 @@ from database import  SessionLocal  # Importa l'engine del database e la classe 
 from models import Users
 from passlib.context import CryptContext #importare per criptare
 from starlette import status
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
 # Crea un router: serve per organizzare gli endpoint in moduli separati
@@ -35,6 +36,23 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
+#FUNZIONE AUTENTICAZIONE UTENTE VERIFICA SE PASSWORD E USERNAME CORRETTI
+def authenticate_user(username: str, password: str, db):
+    # Cerca nel database un utente con lo username fornito
+    user = db.query(Users).filter(Users.username == username).first()
+
+    # Se l'utente non esiste, ritorna False (autenticazione fallita)
+    if not user:
+        return False
+
+    # Verifica la password:
+    # confronta la password inserita con quella salvata (hashata) nel database
+    if not bcypt_context.verify(password, user.hashed_password):
+        return False  # Password errata
+
+    # Se tutto è corretto (utente esiste + password giusta)
+    return True
+
 
 @router.post("/auth", status_code= status.HTTP_201_CREATED)
 # Definisce un endpoint GET sul percorso /auth/
@@ -54,5 +72,33 @@ async def create_user(db: db_dependency ,
     db.commit()
 
 
+@router.post("/token")
+# Serve per effettuare il login e ottenere una risposta (di solito un token)
 
-#per cryptare password scaricare dipendenze pip install passlib e scaricare dipendenza pip install bcrypt==4.0.1
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],  
+    # OAuth2PasswordRequestForm prende automaticamente:
+    # - username
+    # - password
+    # da una richiesta form (tipica del login)
+
+    db: db_dependency
+    # Dipendenza del database: permette di usare la sessione DB
+):
+
+    # Chiama la funzione di autenticazione
+    # Controlla se username e password sono corretti
+    user = authenticate_user(form_data.username, form_data.password, db)
+
+    # Se l'autenticazione fallisce (utente non esiste o password errata)
+    if not user:
+        return 'autenticazione fallita'
+
+    # Se l'autenticazione va a buon fine
+    return 'autenticazione corretta'
+    # In un'app reale qui si restituisce un TOKEN JWT
+
+
+
+
+#per cryptare password scaricare dipendenze pip install passlib e scaricare dipendenza pip install bcrypt==4.0.1 pip install python-multipart
