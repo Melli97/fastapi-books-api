@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from sqlalchemy.orm import Session  # Importa la classe Session da SQLAlchemy per gestire le sessioni del database
 from fastapi import FastAPI, APIRouter,Depends # Importa FastAPI APIRouter per creare gruppi di endpoint
@@ -7,10 +8,15 @@ from models import Users
 from passlib.context import CryptContext #importare per criptare
 from starlette import status
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt
 
-router = APIRouter()
-# Crea un router: serve per organizzare gli endpoint in moduli separati
-bcypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+router = APIRouter() # Crea un router: serve per organizzare gli endpoint in moduli separati
+
+SECRET_KEY = '72501f8337b492fae4d8130de00ff9676acf4ac880a87d60c288b9db50c6f41d'# Chiave segreta e algoritmo per firmare i JWT
+ALGORITHM =  'HS256'
+
+bcypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')# Configura bcrypt per hashare le password
 
 
 
@@ -22,6 +28,9 @@ class CreateUserRequest(BaseModel):
     password : str
     role : str
 
+class Token(BaseModel): # Modello di risposta del login
+    access_token: str
+    token_type: str
 
 
 # Funzione per ottenere una sessione del database
@@ -51,7 +60,27 @@ def authenticate_user(username: str, password: str, db):
         return False  # Password errata
 
     # Se tutto è corretto (utente esiste + password giusta)
-    return True
+    return user
+
+
+
+def create_access_token(username: str, user_id: int, expires_delta: timedelta):
+    # Payload del token
+    encode = {
+        'sub': username,  # subject (utente)
+        'id': user_id     # id utente
+    }
+
+    # Calcola scadenza
+    expires = datetime.now(timezone.utc) + expires_delta
+
+    # Aggiunge scadenza al payload
+    encode.update({'exp': expires})
+
+    # Crea JWT firmato
+    return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 
 
 @router.post("/auth", status_code= status.HTTP_201_CREATED)
@@ -72,7 +101,7 @@ async def create_user(db: db_dependency ,
     db.commit()
 
 
-@router.post("/token")
+@router.post("/token", response_model=Token)
 # Serve per effettuare il login e ottenere una risposta (di solito un token)
 
 async def login_for_access_token(
@@ -93,9 +122,12 @@ async def login_for_access_token(
     # Se l'autenticazione fallisce (utente non esiste o password errata)
     if not user:
         return 'autenticazione fallita'
-
-    # Se l'autenticazione va a buon fine
-    return 'autenticazione corretta'
+    
+       # Crea token valido 20 minuti
+    token = create_access_token(user.username,user.id,timedelta(minutes=20))
+   
+    return {'access_token': token, 'token_type': 'bearer' }
+ # Se l'autenticazione va a buon fine ritorna token
     # In un'app reale qui si restituisce un TOKEN JWT
 
 
