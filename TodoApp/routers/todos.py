@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path  # Importa FastAPI p
 from models import Todos  # Importa il modello Todos dal modulo models
 from database import  SessionLocal  # Importa l'engine del database e la classe di sessione locale
 from starlette import status
-
+from .auth import get_current_user
 
 
 # Crea un'istanza dell'app FastAPI
@@ -25,6 +25,10 @@ def get_db():
 # Annotazione per la dipendenza del database
 db_dependency = Annotated[Session, Depends(get_db)]
 
+# Definizione di una dependency per ottenere l'utente autenticato
+user_dependency = Annotated[dict, Depends(get_current_user)]
+
+
  # Definisce uno schema Pydantic
 # Serve per validare e strutturare i dati ricevuti dal client (request body)
 class TodoRequest(BaseModel):
@@ -36,8 +40,8 @@ class TodoRequest(BaseModel):
 
 #LEGGERE TUTTI I TODO
 @router.get("/", status_code= status.HTTP_200_OK)
-async def read_all(db: db_dependency):
-    return db.query(Todos).all()  # Esegue una query per ottenere tutte le voci nella tabella Todos
+async def read_all(user: user_dependency,db: db_dependency):
+    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()  # Esegue una query per ottenere tutte le voci nella tabella Todos
 
 
 #RICERCA TODO TRAMITE ID PATH
@@ -66,11 +70,16 @@ async def read_todo(db: db_dependency, todo_id: int = Path(gt=0)):
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
 # Serve per creare una nuova risorsa (todo)
 
-async def create_todo(db: db_dependency, todo_request: TodoRequest):
+async def create_todo(user:user_dependency, db: db_dependency, todo_request: TodoRequest):
+        # user → utente autenticato (preso da get_current_user tramite Depends)
     # db: sessione del database (iniettata automaticamente con Depends)
     # todo_request: dati ricevuti dal body della richiesta (schema Pydantic)
 
-    todo_model = Todos(**todo_request.model_dump())
+
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autenticazione fallita')
+
+    todo_model = Todos(**todo_request.model_dump(), owner_id = user.get('id')) #owner_id assegna l'id dell'utente come proprietario
     # Converte i dati ricevuti (Pydantic) in un modello SQLAlchemy
     # model_dump() trasforma todo_request in un dizionario
     # ** spacchetta il dizionario nei parametri del costruttore di Todos
