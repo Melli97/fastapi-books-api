@@ -1,25 +1,36 @@
+# ===== IMPORT =====
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from sqlalchemy.orm import Session  # Importa la classe Session da SQLAlchemy per gestire le sessioni del database
-from fastapi import FastAPI, APIRouter,Depends # Importa FastAPI APIRouter per creare gruppi di endpoint
+from fastapi import FastAPI, APIRouter,Depends, HTTPException # Importa FastAPI APIRouter per creare gruppi di endpoint
 from pydantic import BaseModel
 from database import  SessionLocal  # Importa l'engine del database e la classe di sessione locale
 from models import Users
 from passlib.context import CryptContext #importare per criptare
 from starlette import status
-from fastapi.security import OAuth2PasswordRequestForm
-from jose import jwt
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm #controlla token
+from jose import jwt,JWTError
 
 
-router = APIRouter() # Crea un router: serve per organizzare gli endpoint in moduli separati
 
+# ===== ROUTER =====
+router = APIRouter(
+    prefix ='/auth',
+    tags = ['auth']
+) # Crea un router: serve per organizzare gli endpoint in moduli separati
+
+# ===== SICUREZZA =====
 SECRET_KEY = '72501f8337b492fae4d8130de00ff9676acf4ac880a87d60c288b9db50c6f41d'# Chiave segreta e algoritmo per firmare i JWT
 ALGORITHM =  'HS256'
 
+# ===== HASH PASSWORD =====
 bcypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')# Configura bcrypt per hashare le password
 
+# ===== TOKEN HANDLER =====
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token') # Prende automaticamente il token dalle richieste
 
 
+# ===== MODELLI =====
 class CreateUserRequest(BaseModel):
     username : str
     email: str
@@ -33,6 +44,7 @@ class Token(BaseModel): # Modello di risposta del login
     token_type: str
 
 
+# ===== DATABASE =====
 # Funzione per ottenere una sessione del database
 def get_db():
     db = SessionLocal()  # Crea una nuova sessione del database
@@ -44,7 +56,7 @@ def get_db():
 # Annotazione per la dipendenza del database
 db_dependency = Annotated[Session, Depends(get_db)]
 
-
+# ===== AUTENTICAZIONE =====
 #FUNZIONE AUTENTICAZIONE UTENTE VERIFICA SE PASSWORD E USERNAME CORRETTI
 def authenticate_user(username: str, password: str, db):
     # Cerca nel database un utente con lo username fornito
@@ -63,7 +75,7 @@ def authenticate_user(username: str, password: str, db):
     return user
 
 
-
+# ===== CREAZIONE TOKEN =====
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     # Payload del token
     encode = {
@@ -81,9 +93,43 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+# ===== DECODE TOKEN =====
+async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
+    # Questa funzione serve per ottenere l'utente corrente dal token JWT
+    # 'token' viene preso automaticamente dalla richiesta (header Authorization: Bearer ...)
+
+    try:
+        # Decodifica il token JWT usando la chiave segreta e l'algoritmo
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        # Estrae lo username dal payload (campo 'sub')
+        username: str = payload.get('sub')
+
+        # Estrae l'id utente dal payload
+        user_id: int = payload.get('id')
+
+        # Se uno dei due è None → token non valido
+        if username is None or user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="user non valido"
+            )
+
+        # Se tutto è corretto  ritorna i dati dell'utente
+        return {'username': username, 'id': user_id}
+
+    except JWTError:
+        # Se il token è: scaduto- modificato- non valido
+        # allora solleva errore 401 (non autorizzato)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="user non valido"
+        )
 
 
-@router.post("/auth", status_code= status.HTTP_201_CREATED)
+
+# ===== REGISTRAZIONE =====
+@router.post("/", status_code= status.HTTP_201_CREATED)
 # Definisce un endpoint GET sul percorso /auth/
 # Questo endpoint sarà accessibile quando il router viene incluso nell'app principale
 async def create_user(db: db_dependency ,
@@ -101,6 +147,7 @@ async def create_user(db: db_dependency ,
     db.commit()
 
 
+# ===== LOGIN =====
 @router.post("/token", response_model=Token)
 # Serve per effettuare il login e ottenere una risposta (di solito un token)
 
@@ -121,7 +168,10 @@ async def login_for_access_token(
 
     # Se l'autenticazione fallisce (utente non esiste o password errata)
     if not user:
-        return 'autenticazione fallita'
+          raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="user non valido"
+            )
     
        # Crea token valido 20 minuti
     token = create_access_token(user.username,user.id,timedelta(minutes=20))
