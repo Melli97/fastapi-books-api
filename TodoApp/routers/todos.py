@@ -41,18 +41,23 @@ class TodoRequest(BaseModel):
 #LEGGERE TUTTI I TODO
 @router.get("/", status_code= status.HTTP_200_OK)
 async def read_all(user: user_dependency,db: db_dependency):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autenticazione fallita')
     return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()  # Esegue una query per ottenere tutte le voci nella tabella Todos
 
 
 #RICERCA TODO TRAMITE ID PATH
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)  # Se la richiesta ha successo, restituisce HTTP 200
 
-async def read_todo(db: db_dependency, todo_id: int = Path(gt=0)):
+async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     # db: viene iniettato automaticamente tramite la dependency (sessione DB)
     # todo_id: parametro preso dall'URL
     # Path(gt=0): valida che todo_id sia > 0
 
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if user is None:
+         raise HTTPException(status_code=401, detail='Autenticazione fallita')
+
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
     # Query al database:
     # - cerca nella tabella Todos
     # - filtra per id uguale a todo_id
@@ -94,13 +99,16 @@ async def create_todo(user:user_dependency, db: db_dependency, todo_request: Tod
 #AGGIORNARE TODO PUT
 @router.put("/todo/{todo_id}", status_code= status.HTTP_204_NO_CONTENT)
 
-async def update_todo(db: db_dependency, todo_request: TodoRequest ,todo_id : int= Path(gt=0)):
+async def update_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest ,todo_id : int= Path(gt=0)):
     # db: sessione database (iniettata automaticamente)
     # todo_request: dati aggiornati inviati dal client (body della richiesta)
     # todo_id: id del todo preso dall'URL
     # Path(gt=0): valida che l'id sia maggiore di 0
 
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autenticazione fallita')
+
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
     # Cerca nel database il todo con l'id specificato
     # .first() restituisce il primo risultato oppure None se non esiste
 
@@ -122,16 +130,19 @@ async def update_todo(db: db_dependency, todo_request: TodoRequest ,todo_id : in
 @router.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 # Endpoint DELETE per eliminare un todo
 
-async def delete_todo(db: db_dependency, todo_id: int = Path(gt=0)):
+async def delete_todo(user: user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     # db: sessione database (iniettata automaticamente)
 
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autenticazione fallita')
+    
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
     # Cerca il todo nel database
 
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo non trovato")
 
-    db.query(Todos).filter(Todos.id == todo_id).delete()
+    db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).delete()
     #db.delete(todo_model)
     # Elimina il record dal database
 
