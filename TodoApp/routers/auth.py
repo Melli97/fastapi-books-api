@@ -76,11 +76,12 @@ def authenticate_user(username: str, password: str, db):
 
 
 # ===== CREAZIONE TOKEN =====
-def create_access_token(username: str, user_id: int, expires_delta: timedelta):
+def create_access_token(username: str, user_id: int,role: str, expires_delta: timedelta):
     # Payload del token
     encode = {
         'sub': username,  # subject (utente)
-        'id': user_id     # id utente
+        'id': user_id,     # id utente
+        'role': role
     }
 
     # Calcola scadenza
@@ -108,6 +109,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         # Estrae l'id utente dal payload
         user_id: int = payload.get('id')
 
+         # Estrae l'ruolo utente dal payload
+        user_role: str = payload.get('role')
+
         # Se uno dei due è None → token non valido
         if username is None or user_id is None:
             raise HTTPException(
@@ -116,7 +120,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
             )
 
         # Se tutto è corretto  ritorna i dati dell'utente
-        return {'username': username, 'id': user_id}
+        return {'username': username, 'id': user_id , 'role': user_role}
 
     except JWTError:
         # Se il token è: scaduto- modificato- non valido
@@ -174,7 +178,7 @@ async def login_for_access_token(
             )
     
        # Crea token valido 20 minuti
-    token = create_access_token(user.username,user.id,timedelta(minutes=20))
+    token = create_access_token(user.username,user.id, user.role,timedelta(minutes=20))
    
     return {'access_token': token, 'token_type': 'bearer' }
  # Se l'autenticazione va a buon fine ritorna token

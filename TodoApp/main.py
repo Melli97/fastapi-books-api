@@ -4,7 +4,7 @@ import models  # Importa il modulo models, che contiene i modelli del database
 
 from database import engine  # Importa l'engine del database e la classe di sessione locale
 
-from routers import auth , todos #import file auth
+from routers import auth , todos, admin , users #import file auth
 
 
 # Crea un'istanza dell'app FastAPI
@@ -19,7 +19,8 @@ models.Base.metadata.create_all(bind=engine)
 # In questo modo puoi organizzare il progetto in più file invece di avere tutto in main.py
 app.include_router(auth.router)
 app.include_router(todos.router)
-
+app.include_router(admin.router)
+app.include_router(users.router)
 
 
 
