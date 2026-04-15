@@ -11,12 +11,16 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # URL del database (in questo caso SQLite)
 # ./todos.db significa che il file verrà creato nella cartella del progetto
-SQLALCHEMY_DATABASE_URL = 'sqlite:///./todosapp.db'
-
+SQLALCHEMY_DATABASE_URL ='postgresql://postgres:marcello97!@localhost/TodoApplicationDatabase'    #collega postgres a fastapi
+ 
+  #'sqlite:///./todosapp.db' serve per database sqllite
+                            
 
 # Crea il motore (engine) che gestisce la connessione al database
 # check_same_thread=False serve per evitare errori con SQLite e FastAPI (multi-thread)
-engine = create_engine(SQLALCHEMY_DATABASE_URL,connect_args={'check_same_thread': False})
+engine = create_engine(SQLALCHEMY_DATABASE_URL)   
+
+#,connect_args={'check_same_thread': False}) serve per collegare fastapi a datbase sqlite
 
 
 # Crea una "fabbrica di sessioni"
