@@ -14,6 +14,12 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 
+@app.get("/healthy")
+def health_check():
+    return {'status': 'healthy'}
+
+
+
 # Aggiunge all'app FastAPI tutti gli endpoint definiti nel router del file auth
 # auth.router è un oggetto APIRouter che contiene le rotte (es: login, register)
 # In questo modo puoi organizzare il progetto in più file invece di avere tutto in main.py
@@ -21,6 +27,7 @@ app.include_router(auth.router)
 app.include_router(todos.router)
 app.include_router(admin.router)
 app.include_router(users.router)
+
 
 
 
