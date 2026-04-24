@@ -5,7 +5,11 @@ from main import app
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 import pytest
-from models import Todos
+from models import Todos,Users
+from routers.auth import bcypt_context
+
+
+
 # ==========================================
 # CONFIGURAZIONE AMBIENTE E DATABASE DI TEST
 # ==========================================
@@ -47,7 +51,7 @@ def override_get_current_user():
 client = TestClient(app)
 
 # ==========================================
-# FIXTURE PER LA GESTIONE DATI
+# FIXTURE PER LA GESTIONE DATI TODO
 # ==========================================
 
 @pytest.fixture
@@ -78,4 +82,50 @@ def test_todo():
         # Questo assicura che il test successivo non trovi dati residui ("spazzatura")
         connection.execute(text("DELETE FROM todos;"))
         # Conferma l'eliminazione
+        connection.commit()
+
+# ==========================================
+# FIXTURE PER LA GESTIONE DATI UTENTI TEST
+# ==========================================
+
+@pytest.fixture
+def test_user():
+    """
+    Fixture per creare un utente di test nel database prima di ogni test
+    che richiede un utente autenticato.
+    """
+    # 1. ISTANZIAZIONE DELL'OGGETTO
+    # Creiamo un'istanza del modello SQLAlchemy 'Users'.
+    # È come creare un "biscotto" usando lo stampo della classe.
+    user = Users(
+        username = "Mancio997",
+        email = "marcello@gmail.com",
+        first_name = "Marcello",
+        last_name = "Melli",
+        hashed_password = bcypt_context.hash("testpassword"), # La password viene hashata per sicurezza
+        role = "admin",
+        phone_number = "1111111111"
+    )
+
+    # 2. INSERIMENTO NEL DATABASE
+    # Apriamo una sessione temporanea di test, aggiungiamo l'utente e salviamo (commit).
+    db = TestingSessionLocal()
+    db.add(user)
+    db.commit()
+    
+    # 3. CONSEGNA DELL'OGGETTO AL TEST
+    # 'yield' sospende la funzione e restituisce l'utente appena creato al test.
+    # Tutto ciò che segue il 'yield' verrà eseguito DOPO che il test ha concluso il lavoro.
+    yield user
+    
+    # 4. FASE DI TEARDOWN (PULIZIA)
+    # È CRUCIALE per garantire l'isolamento dei test. Senza questa fase, i dati
+    # dell'utente rimarrebbero nel database, causando errori nei test successivi.
+    with engine.connect() as connection:
+        # Eseguiamo una query SQL pura per eliminare i dati creati.
+        # NOTA: Se hai vincoli di chiavi esterne (foreign keys), assicurati di 
+        # eliminare prima le tabelle figlie (es. 'todos') e poi 'users'.
+        connection.execute(text("DELETE FROM users;"))
+        
+        # Confermiamo l'operazione di eliminazione (commit)
         connection.commit()
