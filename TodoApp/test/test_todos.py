@@ -17,7 +17,7 @@ app.dependency_overrides[get_current_user] = override_get_current_user
 # TITOLO: Test lettura di tutti i Todo autenticati
 def test_read_all_authenticated(test_todo):
     # Esegue una richiesta GET all'endpoint principale
-    response = client.get("/")
+    response = client.get("/todos")
     # Verifica che la chiamata abbia avuto successo (200 OK)
     assert response.status_code == status.HTTP_200_OK
     # Verifica che la risposta sia una lista vuota (perché il DB è appena creato)
@@ -29,7 +29,7 @@ def test_read_all_authenticated(test_todo):
 def test_read_one_authenticated(test_todo):
     # Esegue una richiesta GET per leggere uno specifico Todo con ID 1
     # La fixture 'test_todo' garantisce che il record ID 1 sia già presente nel DB
-    response = client.get("/todo/1")
+    response = client.get("/todos/todo/1")
     
     # Verifica che la chiamata sia andata a buon fine (200 OK)
     assert response.status_code == status.HTTP_200_OK
@@ -43,7 +43,7 @@ def test_read_one_authenticated(test_todo):
 def test_read_one_authenticated_not_found():
     # Esegue una richiesta GET per un ID inesistente (999)
     # Questa volta NON passiamo 'test_todo' perché vogliamo testare l'assenza di dati
-    response = client.get("/todo/999")
+    response = client.get("/todos/todo/999")
     
     # Verifica che il server risponda correttamente con un codice 404 (Not Found)
     assert response.status_code == 404
@@ -64,7 +64,7 @@ def test_create_todo(test_todo):
 
     # Esegue la chiamata POST all'endpoint di creazione
     # Il TestClient invia i dati come JSON, esattamente come farebbe un frontend o Postman
-    response = client.post('/todo/', json=request_data)
+    response = client.post('/todos/todo/', json=request_data)
     
     # Verifica che il server abbia risposto con codice 201 (Created), standard per le nuove risorse
     assert response.status_code == 201    
@@ -99,7 +99,7 @@ def test_update_todo(test_todo):
     }
 
     # Esegue una richiesta PUT sull'ID 1 (esistente grazie alla fixture)
-    response = client.put('/todo/1', json=request_data)
+    response = client.put('/todos/todo/1', json=request_data)
     # Verifica che il server risponda con 204 (No Content), tipico di un aggiornamento riuscito
     assert response.status_code == 204  
     
@@ -118,7 +118,7 @@ def test_update_todo_not_found(test_todo):
     }
 
     # Prova ad aggiornare un ID che non esiste nel DB
-    response = client.put('/todo/999', json=request_data)
+    response = client.put('/todos/todo/999', json=request_data)
     # Verifica che riceva un errore 404
     assert response.status_code == 404
     # Verifica che il messaggio di errore sia quello corretto (con la 'T' maiuscola)
@@ -127,7 +127,7 @@ def test_update_todo_not_found(test_todo):
 # TITOLO: Test cancellazione di un Todo esistente (DELETE)
 def test_delete_todo(test_todo):
     # Esegue una richiesta DELETE sull'ID 1
-    response = client.delete('/todo/1')
+    response = client.delete('/todos/todo/1')
     # Verifica che il server risponda con 204 (No Content)
     assert response.status_code == 204  
     
@@ -140,7 +140,7 @@ def test_delete_todo(test_todo):
 # TITOLO: Test cancellazione di un Todo inesistente (404)
 def test_delete_todo_not_found(test_todo):
     # Prova a cancellare un ID che non esiste
-    response = client.delete('/todo/999')
+    response = client.delete('/todos/todo/999')
     # Verifica che riceva un errore 404
     assert response.status_code == 404
     # Verifica il messaggio di errore

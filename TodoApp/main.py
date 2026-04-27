@@ -1,9 +1,9 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 import models  # Importa il modulo models, che contiene i modelli del database
 
 from database import engine  # Importa l'engine del database e la classe di sessione locale
-
+from fastapi.templating import Jinja2Templates
 from routers import auth , todos, admin , users #import file auth
 
 
@@ -13,6 +13,13 @@ app = FastAPI()
 # Crea le tabelle nel database utilizzando i modelli definiti
 models.Base.metadata.create_all(bind=engine)
 
+
+templates = Jinja2Templates(directory = "templates")
+
+
+@app.get("/")
+def test(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
 
 @app.get("/healthy")
 def health_check():

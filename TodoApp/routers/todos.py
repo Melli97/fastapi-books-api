@@ -9,7 +9,10 @@ from .auth import get_current_user
 
 
 # Crea un'istanza dell'app FastAPI
-router = APIRouter()
+router = APIRouter(
+    prefix='/todos',
+    tags= ['todos']
+)
 
 
 
