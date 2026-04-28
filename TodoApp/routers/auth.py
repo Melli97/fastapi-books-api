@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from sqlalchemy.orm import Session  # Importa la classe Session da SQLAlchemy per gestire le sessioni del database
-from fastapi import FastAPI, APIRouter,Depends, HTTPException # Importa FastAPI APIRouter per creare gruppi di endpoint
+from fastapi import FastAPI, APIRouter,Depends, HTTPException, Request # Importa FastAPI APIRouter per creare gruppi di endpoint
 from pydantic import BaseModel
 from database import  SessionLocal  # Importa l'engine del database e la classe di sessione locale
 from models import Users
@@ -10,6 +10,7 @@ from passlib.context import CryptContext #importare per criptare
 from starlette import status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm #controlla token
 from jose import jwt,JWTError
+from fastapi.templating import Jinja2Templates
 
 
 
@@ -56,6 +57,29 @@ def get_db():
 
 # Annotazione per la dipendenza del database
 db_dependency = Annotated[Session, Depends(get_db)]
+
+templates = Jinja2Templates( directory="templates")
+
+#### PAGINE DI INTERFACCIA UTENTE (UI) #########
+
+# Rotta per mostrare la pagina di accesso
+@router.get("/login-page")
+def render_login_page(request: Request):
+    """
+    Carica e restituisce il file HTML del modulo di login.
+    """
+    return templates.TemplateResponse("login.html", {"request": request})
+
+# Rotta per mostrare la pagina di creazione account
+@router.get("/register-page")
+def render_register_page(request: Request):
+    """
+    Carica e restituisce il file HTML del modulo di registrazione.
+    """
+    return templates.TemplateResponse("register.html", {"request": request})
+
+###############################################
+
 
 # ===== AUTENTICAZIONE =====
 #FUNZIONE AUTENTICAZIONE UTENTE VERIFICA SE PASSWORD E USERNAME CORRETTI

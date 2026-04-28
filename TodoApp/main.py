@@ -1,12 +1,13 @@
-
-from fastapi import FastAPI,Request
-import models  # Importa il modulo models, che contiene i modelli del database
-
-from database import engine  # Importa l'engine del database e la classe di sessione locale
+from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
-from routers import auth , todos, admin , users #import file auth
+from fastapi.staticfiles import StaticFiles
+import models  # Importa il modulo models, che contiene i modelli del database
+from database import engine  # Importa l'engine del database e la classe di sessione locale
+from routers import auth, todos, admin, users  # import file auth
 
-
+# ==========================================
+# 1. INIZIALIZZAZIONE APP E DATABASE
+# ==========================================
 # Crea un'istanza dell'app FastAPI
 app = FastAPI()
 
@@ -14,19 +15,51 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 
-templates = Jinja2Templates(directory = "templates")
+# ==========================================
+# 2. CONFIGURAZIONE RISORSE (TEMPLATES E STATIC)
+# ==========================================
+# 1. Inizializzazione del motore dei template
+# Diciamo a FastAPI dove si trovano i file HTML (nella cartella 'templates')
+# Jinja2 è il motore che permette di inserire dati dinamici dentro l'HTML
+templates = Jinja2Templates(directory="templates")
+
+# Monta una directory statica per servire file che non cambiano
+# - "/static": È il prefisso dell'URL che userai nel browser o nell'HTML.
+# - directory="static": È la cartella nel tuo computer dove sono salvati fisicamente i file.
+# - name="static": È un identificativo interno per FastAPI (utile per generare URL nei template).
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+# ==========================================
+# 3. ROTTE WEB (TEMPLATE RENDERING)
+# ==========================================
+# 2. Rotta principale (Home Page)
+# Il decoratore @app.get("/") indica che questa funzione risponde alle chiamate browser sulla home
 @app.get("/")
 def test(request: Request):
+    # 'request: Request' è un oggetto che contiene le informazioni sulla richiesta HTTP (IP, headers, ecc.)
+    # È obbligatorio passarlo a TemplateResponse per permettere a Jinja2 di generare link e URL correttamente.
+    
+    # TemplateResponse cerca il file 'home.html' nella cartella 'templates' 
+    # e lo restituisce al browser, iniettando l'oggetto 'request' nel contesto
     return templates.TemplateResponse("home.html", {"request": request})
 
+
+# ==========================================
+# 4. ROTTE DI SISTEMA (API)
+# ==========================================
+# 3. Rotta di monitoraggio (Health Check)
+# Questa rotta serve solitamente per verificare se il server è attivo e funzionante
 @app.get("/healthy")
 def health_check():
+    # Restituisce un dizionario Python; FastAPI lo trasforma automaticamente 
+    # in una risposta JSON con stato HTTP 200 (OK)
     return {'status': 'healthy'}
 
 
-
+# ==========================================
+# 5. REGISTRAZIONE ROUTER (MODULARIZZAZIONE)
+# ==========================================
 # Aggiunge all'app FastAPI tutti gli endpoint definiti nel router del file auth
 # auth.router è un oggetto APIRouter che contiene le rotte (es: login, register)
 # In questo modo puoi organizzare il progetto in più file invece di avere tutto in main.py

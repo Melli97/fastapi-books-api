@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Collegamento ai file CSS tramite Jinja2 -->
+    <!-- base.css per i tuoi stili custom -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path = '/css/base.css')}}">    
+    <!-- bootstrap.css per la struttura a card e i componenti dei moduli -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path = '/css/bootstrap.css')}}">    
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoApp</title>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Struttura a Card di Bootstrap per contenere il modulo di login -->
+        <div class="card">
+            <div class="card-header">
+                Login
+            </div>
+            <div class="card-body">
+                <!-- Form di login: l'ID 'loginForm' servirà per gestire l'invio dati con JavaScript (Fetch API) -->
+                <form id="loginForm">
+                    <!-- Gruppo per il campo Username -->
+                    <div class="form-group">
+                        <label>Username</label>    
+                        <!-- 'name="username"' è il nome del campo che il server FastAPI si aspetta di ricevere -->
+                        <input type="text" class="form-control" name="username" autocomplete="username" required>
+                    </div>
+                    
+                    <!-- Gruppo per il campo Password -->
+                    <div class="form-group">
+                        <label>Password</label>
+                        <!-- type="password" nasconde i caratteri digitati -->
+                        <input type="password" class="form-control" name="password" autocomplete="current-password" required>
+                    </div>
+                    
+                    <!-- Bottone-->
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+            
+            <!-- Footer della card per rimandare l'utente alla registrazione se non ha un account -->
+            <div class="card-footer text-muted">
+                <!-- Nota il percorso: punta alla rotta /register-page che abbiamo definito nei router -->
+                <a href="/auth/register-page">Register?</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

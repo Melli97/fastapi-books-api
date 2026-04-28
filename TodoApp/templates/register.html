@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Carica i file CSS statici usando url_for di FastAPI -->
+    <!-- base.css contiene i tuoi stili personalizzati -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path = '/css/base.css')}}">    
+    <!-- bootstrap.css gestisce la griglia e i componenti grafici (form, card, bottoni) -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path = '/css/bootstrap.css')}}">    
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoApp</title>
+</head>
+<body>
+    <!-- Il 'container' di Bootstrap centra il contenuto e aggiunge margini laterali -->
+    <div class="container">
+        <!-- 'card' crea un riquadro bianco con bordi arrotondati e ombra leggera -->
+        <div class="card">
+            <div class="card-header">
+                Register
+            </div>
+            <div class="card-body">
+                <!-- Inizio del modulo di registrazione -->
+                <!-- L'ID 'registerForm' servirà dopo per catturare i dati con JavaScript -->
+                <form id="registerForm">
+                    
+                    <!-- Prima riga del form: Email e Username -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            <!-- 'name="email"' è fondamentale: identifica il dato che verrà inviato al server -->
+                            <input type="text" class="form-control" name="email" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Username</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>                      
+                    </div>
+
+                    <!-- Seconda riga: Nome e Cognome -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>First Name</label>
+                            <input type="text" class="form-control" name="firstname" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Last Name</label>
+                            <input type="text" class="form-control" name="lastname" required>
+                        </div>
+                    </div>
+
+                    <!-- Terza riga: Ruolo e Numero di telefono -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Role</label>
+                            <input type="text" class="form-control" name="role" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Phone Number</label>
+                            <input type="text" class="form-control" name="phonenumber" autocomplete="phonenumber" required>
+                        </div>
+                    </div>
+
+                    <!-- Campi per la Password (usano type="password" per nascondere i caratteri) -->
+                    <div class="form-group">
+                        <label for="">Password</label>
+                        <input type="password" class="form-control" name="password" autocomplete="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="">Verify Password</label>
+                        <!-- 'name="password2"' servirà per controllare se le password coincidono -->
+                        <input type="password" class="form-control" name="password2" autocomplete="new-password" required>
+                    </div>
+
+                    <!-- Bottone di invio -->
+                    <button type="submit" class="btn btn-primary">Sing-in</button>                    
+                </form>
+            </div>
+
+            <!-- Footer della card con link alla pagina di login se l'utente è già registrato -->
+            <div class="card-footer text-muted">
+                <a href="/auth/login-page">Already have an account?</a>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>
