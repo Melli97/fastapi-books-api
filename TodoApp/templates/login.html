@@ -1,17 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Collegamento ai file CSS tramite Jinja2 -->
-    <!-- base.css per i tuoi stili custom -->
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path = '/css/base.css')}}">    
-    <!-- bootstrap.css per la struttura a card e i componenti dei moduli -->
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path = '/css/bootstrap.css')}}">    
-    
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TodoApp</title>
-</head>
-<body>
+{%include 'layout.html'%}
 
     <div class="container">
         <!-- Struttura a Card di Bootstrap per contenere il modulo di login -->
@@ -49,5 +36,3 @@
         </div>
     </div>
 
-</body>
-</html>
