@@ -1,12 +1,16 @@
 from typing import Annotated  # Importa Annotated per annotare il tipo di dipendenze
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session  # Importa la classe Session da SQLAlchemy per gestire le sessioni del database
-from fastapi import APIRouter, Depends, HTTPException, Path  # Importa FastAPI per creare l'router e Depends per gestire le dipendenze
+from fastapi import APIRouter, Depends, HTTPException, Path , Request , status # Importa FastAPI per creare l'router e Depends per gestire le dipendenze
 from models import Todos  # Importa il modello Todos dal modulo models
 from database import  SessionLocal  # Importa l'engine del database e la classe di sessione locale
-from starlette import status
-from .auth import get_current_user
+from starlette import status  # Codici HTTP (es. 200, 302, 401)
+from .auth import get_current_user # Verifica identità utente (JWT)
+from starlette.responses import RedirectResponse # Reindirizzamento del browser
+from fastapi.templating import Jinja2Templates   # Motore per pagine HTML (Jinja2)
 
+
+templates = Jinja2Templates( directory="templates")
 
 # Crea un'istanza dell'app FastAPI
 router = APIRouter(
@@ -39,6 +43,45 @@ class TodoRequest(BaseModel):
     description: str = Field(min_length=3, max_length= 100)
     priority: int = Field(gt=0, lt=6)
     complete: bool
+
+
+def redirect_to_login():
+    redirect_response = RedirectResponse(url ="/auth/login-page", status_code= status.HTTP_302_FOUND)
+    redirect_response.delete_cookie(key="access_token")
+    return redirect_response
+
+
+#### PAGINE DI INTERFACCIA UTENTE (UI) #########
+
+
+@router.get("/todo-page")
+async def render_todo_page(request: Request, db: db_dependency):
+    """
+    Carica e restituisce il file HTML del modulo di todo.
+    """
+    try:
+        # Tenta di recuperare l'utente corrente leggendo il JWT (access_token) dai cookie della richiesta
+        user = await get_current_user(request.cookies.get('access_token'))
+        
+        # Se il token non è presente o non è valido (get_current_user restituisce None),
+        # reindirizza l'utente alla pagina di login
+        if user is None:
+            return redirect_to_login()
+        
+        # Interroga il database per ottenere tutti i "todos" che appartengono all'utente loggato
+        # Viene filtrato per 'owner_id' usando l'ID estratto dal dizionario/oggetto user
+        todos = db.query(Todos).filter(Todos.owner_id == user.get("id")).all()
+
+        # Restituisce la risposta caricando il template Jinja2 "todo.html"
+        # Passa al template l'oggetto 'request' (obbligatorio) e la lista dei 'todos' recuperati
+        return templates.TemplateResponse("todo.html", {"request": request, "todos": todos})
+    
+    except:
+        # cattura l'eccezione e riporta l'utente in sicurezza alla pagina di login
+        return redirect_to_login()
+###############################################
+
+
 
 
 #LEGGERE TUTTI I TODO
