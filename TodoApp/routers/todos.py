@@ -74,7 +74,7 @@ async def render_todo_page(request: Request, db: db_dependency):
 
         # Restituisce la risposta caricando il template Jinja2 "todo.html"
         # Passa al template l'oggetto 'request' (obbligatorio) e la lista dei 'todos' recuperati
-        return templates.TemplateResponse("todo.html", {"request": request, "todos": todos})
+        return templates.TemplateResponse("todo.html", {"request": request, "todos": todos,"user": user})
     
     except:
         # cattura l'eccezione e riporta l'utente in sicurezza alla pagina di login
