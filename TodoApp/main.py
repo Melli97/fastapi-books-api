@@ -1,9 +1,11 @@
-from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Request, status
+
 from fastapi.staticfiles import StaticFiles
 import models  # Importa il modulo models, che contiene i modelli del database
 from database import engine  # Importa l'engine del database e la classe di sessione locale
 from routers import auth, todos, admin, users  # import file auth
+from fastapi.responses import RedirectResponse
+
 
 # ==========================================
 # 1. INIZIALIZZAZIONE APP E DATABASE
@@ -21,7 +23,7 @@ models.Base.metadata.create_all(bind=engine)
 # 1. Inizializzazione del motore dei template
 # Diciamo a FastAPI dove si trovano i file HTML (nella cartella 'templates')
 # Jinja2 è il motore che permette di inserire dati dinamici dentro l'HTML
-templates = Jinja2Templates(directory="templates")
+#templates = Jinja2Templates(directory="templates")
 
 # Monta una directory statica per servire file che non cambiano
 # - "/static": È il prefisso dell'URL che userai nel browser o nell'HTML.
@@ -42,7 +44,7 @@ def test(request: Request):
     
     # TemplateResponse cerca il file 'home.html' nella cartella 'templates' 
     # e lo restituisce al browser, iniettando l'oggetto 'request' nel contesto
-    return templates.TemplateResponse("home.html", {"request": request})
+    return RedirectResponse(url="/todos/todo-page" , status_code= status.HTTP_302_FOUND)
 
 
 # ==========================================
@@ -73,8 +75,8 @@ app.include_router(users.router)
 
 
 
-
-
+#################################################################################################
+# prima di suddividere
 
 # # Funzione per ottenere una sessione del database
 # def get_db():

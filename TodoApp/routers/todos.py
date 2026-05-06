@@ -79,6 +79,43 @@ async def render_todo_page(request: Request, db: db_dependency):
     except:
         # cattura l'eccezione e riporta l'utente in sicurezza alla pagina di login
         return redirect_to_login()
+
+
+@router.get('/add-todo-page')
+async def render_todo_page(request: Request):
+    try:
+        # Recupera l'utente tramite il token nei cookie
+        user = await get_current_user(request.cookies.get('access_token'))
+
+        # Se l'utente non è autenticato, lo rimanda al login
+        if user is None:
+            return redirect_to_login()
+
+        # Carica il template passando sia la request che l'user per la navbar
+        return templates.TemplateResponse("add-todo.html", {"request": request, "user": user})
+
+    except:
+        # In caso di errore imprevisto, riporta l'utente al login per sicurezza
+        return redirect_to_login()
+    
+
+@router.get("/edit-todo-page/{todo_id}")
+async def render_edit_todo_page(request:Request , todo_id: int, db: db_dependency):
+        try:
+                        # Recupera l'utente tramite il token nei cookie
+            user = await get_current_user(request.cookies.get('access_token'))
+
+            # Se l'utente non è autenticato, lo rimanda al login
+            if user is None:
+                return redirect_to_login()
+            
+            todo = db.query(Todos).filter(Todos.id == todo_id).first()
+
+            return templates.TemplateResponse("edit-todo.html",{"request": request, "todo": todo,"user": user})
+        except:
+        # In caso di errore imprevisto, riporta l'utente al login per sicurezza
+                return redirect_to_login()
+
 ###############################################
 
 
