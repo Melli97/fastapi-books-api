@@ -1,8 +1,8 @@
 import pytest
 
 def test_equal_or_not_equal():
-    assert 3 == 3     # Verifica che 3 sia uguale a 3 (Passa)
-    assert 3 != 1     # Verifica che 3 sia diverso da 1 (Passa)
+    assert 3 == 3     # Verifica che 3 sia uguale a 3 
+    assert 3 != 1     # Verifica che 3 sia diverso da 1 
 
 
 def test_is_instance():
