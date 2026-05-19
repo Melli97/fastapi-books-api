@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.staticfiles import StaticFiles
 import models  # Importa il modulo models, che contiene i modelli del database
 from database import engine  # Importa l'engine del database e la classe di sessione locale
-from routers import auth, todos, admin, users  # import file auth
+from routers import auth, todos, admin, users,ai  # import file auth
 from fastapi.responses import RedirectResponse
 
 
@@ -69,6 +69,7 @@ app.include_router(auth.router)
 app.include_router(todos.router)
 app.include_router(admin.router)
 app.include_router(users.router)
+app.include_router(ai.router)
 
 
 

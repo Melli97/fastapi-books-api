@@ -59,3 +59,5 @@ Installa tutte le librerie incluse nel file `requirements.txt` lanciando:
 
 ```bash
 pip install -r requirements.txt
+
+#### 4. impostare la GEMINI_API_KEY prima di avviare il server

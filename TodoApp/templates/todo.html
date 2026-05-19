@@ -1,6 +1,5 @@
 {% include 'layout.html' %}
 
-
 <div class="container">
     <div class="card text-center">
         <div class="card-header">
@@ -27,22 +26,44 @@
                     {% if todo.complete == False %}
                     <tr class="pointer">
                         <td>{{loop.index}}</td>
-                        <td>{{todo.title}}</td>
+                        <!-- Allineiamo il testo a sinistra per gestire meglio i dettagli dell'IA -->
+                        <td class="text-start">
+                            <strong>{{todo.title}}</strong>
+                            <div>
+                            <span class="badge">{{ todo.category }}</span>
+                            </div>
+                            <!-- BLOCCO IA INTEGRATO -->
+                            <div class="mt-2 p-2 bg-light rounded border" style="max-width: 400px;">
+                                <button class="btn btn-sm btn-outline-secondary btn-ai" 
+                                        data-title="{{ todo.title }}" 
+                                        data-todo-id="{{ todo.id }}">
+                                     Suggerisci sotto-compiti
+                                </button>
+                                
+                                <!-- Contenitore dinamico per i risultati dell'IA -->
+                                <div id="ai-results-{{ todo.id }}" class="mt-2 d-none">
+                                    <ul id="subtasks-list-{{ todo.id }}" class="list-group list-group-flush text-start small">
+                                        <!-- Popolato da JavaScript -->
+                                    </ul>
+                                </div>
+                            </div>
+                            <!-- ------------------ -->
+                        </td>
                         <td>
                             <button onclick="window.location.href ='edit-todo-page/{{todo.id}}'"
-                                            type="button" class="btn btn-info">
-                             Edit
+                                    type="button" class="btn btn-info">
+                               Edit
                             </button>
                         </td>
                     </tr>
                     {% else %}
-                         <tr class="pointer alert alert-success">
+                    <tr class="pointer alert alert-success">
                         <td>{{loop.index}}</td>
-                        <td class="strike-through-td">{{todo.title}}</td>
+                        <td class="strike-through-td text-start">{{todo.title}}</td>
                         <td>
                             <button onclick="window.location.href ='edit-todo-page/{{todo.id}}'"
-                                            type="button" class="btn btn-info">
-                             Edit
+                                    type="button" class="btn btn-info">
+                               Edit
                             </button>
                         </td>
                     </tr>
@@ -54,3 +75,5 @@
         </div>
     </div>
 </div>
+
+<script src="{{ url_for('static', path='js/ai-assistant.js') }}"></script>

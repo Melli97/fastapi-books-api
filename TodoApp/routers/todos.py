@@ -8,7 +8,9 @@ from starlette import status  # Codici HTTP (es. 200, 302, 401)
 from .auth import get_current_user # Verifica identità utente (JWT)
 from starlette.responses import RedirectResponse # Reindirizzamento del browser
 from fastapi.templating import Jinja2Templates   # Motore per pagine HTML (Jinja2)
-
+import json
+from google.genai import types
+from .ai import client, CategorizeResponse
 
 templates = Jinja2Templates( directory="templates")
 
@@ -43,6 +45,7 @@ class TodoRequest(BaseModel):
     description: str = Field(min_length=3, max_length= 100)
     priority: int = Field(gt=0, lt=6)
     complete: bool
+    category: str = "Altro"
 
 
 def redirect_to_login():
@@ -154,29 +157,56 @@ async def read_todo(user: user_dependency, db: db_dependency, todo_id: int = Pat
     # - restituisce errore 404 (Not Found)
 
 
-#CREAZIONE TODO    
+# ==========================================
+# ENDPOINT PER LA CREAZIONE DI UN NUOVO TODO
+# ==========================================
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
-# Serve per creare una nuova risorsa (todo)
-
-async def create_todo(user:user_dependency, db: db_dependency, todo_request: TodoRequest):
-        # user → utente autenticato (preso da get_current_user tramite Depends)
-    # db: sessione del database (iniettata automaticamente con Depends)
-    # todo_request: dati ricevuti dal body della richiesta (schema Pydantic)
-
-
+async def create_todo(user: user_dependency, db: db_dependency, todo_request: TodoRequest):
+# - user: user_dependency        -> Gestisce la sicurezza. Contiene i dati dell'utente che ha effettuato l'accesso (iniettato tramite Depends).
+# - db: db_dependency            -> Gestisce il Database. È la sessione attiva per comunicare e salvare i dati nel DB (iniettata tramite Depends).
+# - todo_request: TodoRequest    -> Contiene i dati scritti dall'utente. È lo schema Pydantic con Titolo, Descrizione, ecc., presi dal body della richiesta.    
+    
+    # 1. CONTROLLO SICUREZZA: Verifica se l'utente è loggato
     if user is None:
         raise HTTPException(status_code=401, detail='Autenticazione fallita')
 
-    todo_model = Todos(**todo_request.model_dump(), owner_id = user.get('id')) #owner_id assegna l'id dell'utente come proprietario
-    # Converte i dati ricevuti (Pydantic) in un modello SQLAlchemy
-    # model_dump() trasforma todo_request in un dizionario
-    # ** spacchetta il dizionario nei parametri del costruttore di Todos
+    # --- INIZIO INTEGRAZIONE IA ---
+    try:
+        # 2. PREPARAZIONE PROMPT: Crea la richiesta inserendo il titolo scritto dall'utente
+        prompt = f"Assegna una sola categoria a questo compito: '{todo_request.title}'"
+        
+        # 3. CHIAMATA GEMINI: Interroga l'IA configurando un output JSON rigido (basato sull'Enum)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=CategorizeResponse,
+                temperature=0.1,
+            ),
+        )
+        
+        # 4. ESTRAZIONE DATI: Converte il JSON di Gemini in un dizionario ed estrae la categoria
+        ai_data = json.loads(response.text)
+        categoria_rilevata = ai_data.get("category", "Altro")
+        
+    except Exception:
+        # PARACADUTE: Se l'IA fallisce (es. rete giù), assegna "Altro" senza bloccare l'app
+        categoria_rilevata = "Altro"
+    # --- FINE INTEGRAZIONE IA ---
 
+    # 5. ELABORAZIONE DATI UTENTE: Trasforma l'oggetto Pydantic (i dati inseriti dall'utente) in un dizionario Python
+    todo_data = todo_request.model_dump()
+    
+    # 6. INIEZIONE CATEGORIA: Sovrascrive il valore di default con la categoria reale decisa da Gemini
+    todo_data["category"] = categoria_rilevata
+
+    # 7. COSTRUZIONE MODELLO DB: Spacchetta i dati del compito e ci aggancia l'ID dell'utente proprietario
+    todo_model = Todos(**todo_data, owner_id=user.get('id'))
+
+    # 8. SALVATAGGIO DEFINITIVO: Registra il compito nella sessione ed esegue la INSERT reale nel database
     db.add(todo_model)
-    # Aggiunge il nuovo oggetto alla sessione del database
-
     db.commit()
-    # Salva definitivamente i cambiamenti nel database (INSERT reale)
 
 
 #AGGIORNARE TODO PUT
