@@ -61,6 +61,6 @@ Installa tutte le librerie incluse nel file `requirements.txt` lanciando:
 pip install -r requirements.txt
 
 #### 4. impostare la GEMINI_API_KEY prima di avviare il server
-export GEMINI_API_KEY="AIzaSyBpvxl_AcC8niKWiTImX5AiuE3XWhJdJTc"
+
 
 fai partire il server uvicorn main:app --reload

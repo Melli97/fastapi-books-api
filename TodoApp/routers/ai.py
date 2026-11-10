@@ -11,7 +11,11 @@ router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 
 # Inizializza il client ufficiale di Gemini.
 # Di default, cerca la variabile d'ambiente GEMINI_API_KEY per l'autenticazione.
-client = genai.Client()
+# timeout in millisecondi: dopo 30 secondi la richiesta fallisce invece di restare appesa
+client = genai.Client(http_options=types.HttpOptions(timeout=30000))
+
+# Nome del modello usato da entrambi gli endpoint: se Google lo cambia, si modifica solo qui
+MODEL_NAME = "gemini-3.8-flash"
 
 
 
@@ -37,8 +41,10 @@ class SubTaskResponse(BaseModel):
 
 # Definisce un endpoint POST all'indirizzo "/ai/suggest-subtasks".
 # Specifica che la risposta corretta seguirà il modello Pydantic SubTaskResponse.
+# La funzione è "def" e non "async def": la chiamata a Gemini è sincrona (bloccante),
+# quindi FastAPI la esegue in un thread separato e il resto dell'app resta libero.
 @router.post("/suggest-subtasks", response_model=SubTaskResponse)
-async def generate_subtasks(todo_title: str):
+def generate_subtasks(todo_title: str):
     """
     Endpoint che accetta il titolo di un task principale e, tramite l'IA di Gemini,
     lo scompone in un elenco di massimo 4 sotto-compiti in formato JSON strutturato.
@@ -47,9 +53,9 @@ async def generate_subtasks(todo_title: str):
         # Prepara il prompt testuale da inviare al modello, inserendo il task dell'utente.
         prompt = f"Scomponi questo compito in massimo 4 sotto-compiti pratici e brevi: {todo_title}"
         
-        # Effettua la chiamata asincrona (o sincrona, a seconda del contesto dell'SDK) al modello Gemini.
+        # Effettua la chiamata (sincrona) al modello Gemini.
         response = client.models.generate_content(
-            model='gemini-2.5-flash', # Utilizza il modello Gemini 2.5 Flash, ideale per task veloci e strutturati
+            model=MODEL_NAME, # Modello Gemini Flash, ideale per task veloci e strutturati
             contents=prompt,
             config=types.GenerateContentConfig(
                 # Forza il modello a restituire una stringa in formato JSON valido
@@ -76,14 +82,14 @@ async def generate_subtasks(todo_title: str):
 
 # Definisce la rotta POST e assicura che l'output segua lo schema CategorizeResponse
 @router.post("/categorize-task", response_model=CategorizeResponse)
-async def categorize_task(todo_title: str):
+def categorize_task(todo_title: str):
     try:
         # Crea il messaggio unendo l'istruzione al titolo del task dell'utente
         prompt = f"Assegna una sola categoria a questo compito: '{todo_title}'"
         
         # Chiama il modello Gemini configurando la risposta
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=MODEL_NAME,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json", # Chiede un output in formato JSON
