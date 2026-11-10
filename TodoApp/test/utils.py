@@ -63,6 +63,7 @@ def test_todo():
         priority=5, 
         complete=False,
         owner_id=1,
+        category = "Altro"
     )
 
     # Apre una sessione sul database di test

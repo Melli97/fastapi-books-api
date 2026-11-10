@@ -28,7 +28,8 @@ def test_admin_read_all_authenticated(test_todo):
         'description': 'ogni giorno',
         'id': 1, 
         'priority': 5, 
-        'owner_id': 1
+        'owner_id': 1,
+        'category': 'Altro'
     }]
     
 

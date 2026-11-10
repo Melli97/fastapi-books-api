@@ -23,7 +23,7 @@ def test_read_all_authenticated(test_todo):
     # Verifica che la risposta sia una lista vuota (perché il DB è appena creato)
     assert response.json() == [{'complete': False , 'title':'imparo fast',
                                 'description':'ogni giorno',
-                                 'id': 1, 'priority' : 5, 'owner_id': 1}]
+                                 'id': 1, 'priority' : 5, 'owner_id': 1,'category': 'Altro'}]
 
 # TITOLO: Test lettura di un singolo Todo autenticato
 def test_read_one_authenticated(test_todo):
@@ -37,7 +37,7 @@ def test_read_one_authenticated(test_todo):
     # Verifica che il contenuto restituito corrisponda esattamente all'oggetto creato dalla fixture
     assert response.json() == {'complete': False, 'title': 'imparo fast',
                                'description': 'ogni giorno',
-                               'id': 1, 'priority': 5, 'owner_id': 1}
+                               'id': 1, 'priority': 5, 'owner_id': 1,'category': 'Altro'}
 
 # TITOLO: Test lettura di un Todo inesistente (404)
 def test_read_one_authenticated_not_found():
