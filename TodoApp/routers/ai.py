@@ -15,7 +15,7 @@ router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 client = genai.Client(http_options=types.HttpOptions(timeout=30000))
 
 # Nome del modello usato da entrambi gli endpoint: se Google lo cambia, si modifica solo qui
-MODEL_NAME = "gemini-3.8-flash"
+MODEL_NAME = "gemini-flash-lite-latest"
 
 
 
